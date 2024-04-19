@@ -76,7 +76,7 @@ public:
             static_cast<void>(::dlclose(custom_so_handle_));
     }
 
-    int encode(const std::string& text, std::vector<Tensor>& outputs) {
+    int encode(const std::string& text, std::vector<Tensor>& outputs, int32_t max_length = 0) {
         auto memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
         Ort::AllocatorWithDefaultOptions allocator;
         std::vector<int64_t> enc_input_dims = {1}; // Assuming input shape [1]
@@ -92,8 +92,8 @@ public:
                                        enc_input_names_.data(), enc_inputs.data(), enc_inputs.size(),
                                        enc_output_names_.data(), enc_output_names_.size());
 
-        outputs.resize(ort_outputs.size());
-        for (int k=0; k<ort_outputs.size(); ++k) {
+        outputs.resize(3);
+        for (int k=0; k<outputs.size(); ++k) {
             auto type_info = ort_outputs[k].GetTensorTypeAndShapeInfo();
             // ONNXTensorElementDataType output_type = type_info.GetElementType();
             std::vector<int64_t> dimension = type_info.GetShape();
@@ -103,6 +103,24 @@ public:
                 outputs[k].dims[n] = dimension[n];
             auto *data = ort_outputs[k].GetTensorMutableData<int64_t>();
             outputs[k].buf.assign(data, data + outputs[k].size());
+        }
+
+        if (max_length > 0) {
+            int32_t input_ids_len = outputs[0].ndim;
+            if (max_length < input_ids_len) {
+                printf("max_length[%d] < input_ids_len[%d]\n", max_length, input_ids_len);
+                return -1;
+            }
+            
+            int32_t padding_len = max_length - input_ids_len;
+            outputs[0].dims[0] = max_length;
+            outputs[1].dims[0] = max_length;
+            outputs[2].dims[0] = max_length;
+            for (int i=0; i<padding_len; ++i) {
+                outputs[0].buf.emplace_back(0);
+                outputs[1].buf.emplace_back(0);
+                outputs[2].buf.emplace_back(0);
+            }
         }
         return 0;
     }
@@ -175,9 +193,9 @@ BertTokenizer::~BertTokenizer() {
     SAFE_FREE(p);
 }
 
-int BertTokenizer::encode(const std::string& text, std::vector<Tensor>& outputs) {
+int BertTokenizer::encode(const std::string& text, std::vector<Tensor>& outputs, int32_t max_length) {
     auto* p = static_cast<BertTokenizerImpl*>(handle_);
-    return p->encode(text, outputs);
+    return p->encode(text, outputs, max_length);
 }
 
 int BertTokenizer::decode(const input_ids_t &input_ids, std::string &text) {
