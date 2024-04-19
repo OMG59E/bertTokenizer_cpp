@@ -51,9 +51,10 @@ public:
      *
      * @param text
      * @param outputs
+     * @param max_length 最大长度，默认0 表示禁用padding, >0 表示启用padding
      * @return
      */
-    int encode(const std::string& text, std::vector<Tensor>& outputs);
+    int encode(const std::string& text, std::vector<Tensor>& outputs, int32_t max_length = 0);
 
     /**
      *

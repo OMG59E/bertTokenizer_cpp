@@ -11,14 +11,18 @@ int main() {
     BertTokenizer tokenizer(custom_op_library_path);
 
     std::vector<Tensor> outputs;
-    tokenizer.encode("falldown", outputs);
+    tokenizer.encode("falldown", outputs, 16);
+    printf("input_ids dim: %d, len: %ld\n", outputs[0].ndim, outputs[0].size());
+    printf("token_type_ids dim: %d, len: %ld\n", outputs[1].ndim, outputs[1].size());
+    printf("attention_mask dim: %d, len: %ld\n", outputs[2].ndim, outputs[2].size());
+
     std::string text;
     tokenizer.decode(outputs[0].buf, text);
-    std::cout << text << std::endl;
+    printf("text: %s\n", text.c_str());
 
     tokenizer.encode("nice", outputs);
     tokenizer.decode(outputs[0].buf, text);
-    std::cout << text << std::endl;
+    printf("text: %s\n", text.c_str());
 
     return 0;
 }
