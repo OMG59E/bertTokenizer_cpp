@@ -92,7 +92,7 @@ public:
                                        enc_input_names_.data(), enc_inputs.data(), enc_inputs.size(),
                                        enc_output_names_.data(), enc_output_names_.size());
 
-        outputs.resize(3);
+        outputs.resize(4);
         for (int k=0; k<outputs.size(); ++k) {
             auto type_info = ort_outputs[k].GetTensorTypeAndShapeInfo();
             // ONNXTensorElementDataType output_type = type_info.GetElementType();
